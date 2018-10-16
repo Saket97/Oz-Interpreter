@@ -1,42 +1,42 @@
-local MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStatement Statement Environment in
+declare MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStatement Statement Environment
    Statement = {NewCell nil}
    Environment = {NewCell nil}
    SemanticStack = {NewCell nil}
+   Counter = {NewCell 0}
    fun {Pop S} case @S of X|X1 then S:=X1 X end end
    proc {Push S E} S:=E|@S end
    fun {IsEmpty S} @S==nil end
 
-   fun {Nop}
+   proc {Nop}
       {Main}
    end
-   
-   {Push SemanticStack 5}
-   {Push SemanticStack 10}
-   {Browse @SemanticStack}
-   {Browse {Pop SemanticStack}}
-   {Browse {IsEmpty SemanticStack}}
 
-   SemanticStatement = statement(statement:Statement environment:Environment)
+   SemanticStatement = statement(st:Statement env:Environment)
 
-   fun {MainUtil S E}
-      case S of
-	 nop then {Browse nop}
-	 var then {Browse var}
-	 record then {Browse record}
-	 bind then {Browse bind}
-	 conditional then {Browse conditional}
-	 match then {Browse match}
-	 apply then {Browse apply}
-	 
+   proc {MainUtil S E}
+      {Browse func#S}
+	 case S of
+	 nil then {Main}
+	 [] nop then {Browse "NOP"} {Nop}
+	 [] var then {Browse var}
+	 [] record then {Browse record}
+	 [] bind then {Browse bind}
+	 [] conditional then {Browse conditional}
+	 [] match then {Browse match}
+	 [] apply then {Browse apply}
+	 [] Y|Yr then {Push SemanticStack statement(st:Yr env:nil)} {Push SemanticStack statement(st:Y env:nil)} {Main}
+	 end	 
    end
-   
-
-   fun {Main}
-      case {Pop SemanticStack} of
-	 nil then nil
-	 statement(statement:X environment:E) then {MainUtil X E}
+ 
+   proc {Main}
+      local T in
+	 T = {Pop SemanticStack}
+	 case T of
+	    nil then skip
+	    [] statement(st:X env:E) then {MainUtil X E}
+	 end
       end
-      
    end
-   
-end
+
+   {Push SemanticStack statement(st:[[nop] [nop] [nop]] env:nil)}
+   {Main}
