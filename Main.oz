@@ -35,28 +35,25 @@ fun {AdjEnv L X}
    end
 end
 
-proc {Var}
-   local T in
-      T = {Pop SemanticStack}
+proc {Var T}
     %  {Browse T.st.1#T.st.2.1}
       case T.st of
 	 nil then {Main}
       [] X|Xr then {Push SemanticStack statement(st:Xr env:{AdjEnv T.env X})} {Main}
       end
-   end
 end
 
    proc {MainUtil S E}
-	 case S of
+	 case S.1 of
 	 nil then {Main}
 	 [] nop then {Browse nopMatched#E} {Nop}
-	 [] var then {Browse var} {Var}
+	 [] var then {Browse var} {Var statement(st:S.2 env:E)}
 	 [] record then {Browse record}
 	 [] bind then {Browse bind}
 	 [] conditional then {Browse conditional}
 	 [] match then {Browse match}
 	 [] apply then {Browse apply}
-	 [] Y|Yr then {Push SemanticStack statement(st:Yr env:E)} {Push SemanticStack statement(st:Y env:E)} {Main}
+	 [] Y|Yr then {Push SemanticStack statement(st:S.2 env:E)} {Push SemanticStack statement(st:S.1 env:E)} {Main}
 	 end
    end
  
@@ -65,7 +62,7 @@ end
 	 T = {Pop SemanticStack}
 	 case T of
 	    nil then skip
-	    [] statement(st:X env:E) then {Browse E} {MainUtil X E}
+	    [] statement(st:X env:E) then {Browse E} if X==nil then {Main} else {MainUtil X E} end
 	 end
       end
    end
