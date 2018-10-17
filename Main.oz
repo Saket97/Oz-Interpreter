@@ -1,3 +1,6 @@
+\insert 'Unify.oz'
+\insert 'SingleAssignmentStore.oz'
+
 declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStatement Statement Environment
     Statement = {NewCell nil}
     Environment = {NewCell nil}
@@ -16,7 +19,8 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
 
     fun {GetNewVar}
        Counter:=@Counter+1
-       sas(@Counter)
+       {AddKeyToSAS @Counter}
+       @Counter
     end
 
     fun {CopyEnv L N}
@@ -31,16 +35,26 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     fun {AdjEnv L X}
        %{Browse x#L}
        case X of
-          ident(Y) then {CopyEnv L [Y {GetNewVar}]}
+          ident(Y) then {CopyEnv L [ident(Y) {GetNewVar}]}
        end
     end
 
     proc {Var T}
         %  {Browse T.st.1#T.st.2.1}
-          case T.st of
-         nil then {Main}
+        case T.st of
+          nil then {Main}
           [] X|Xr then {Push SemanticStack statement(st:Xr env:{AdjEnv T.env X})} {Main}
-          end
+        end
+    end
+
+    proc {Bind T}
+       local X Y in
+          X = {FindX T.env T.st.1}
+          Y = {FindX T.env T.st.2.1}
+          {Browse Y}
+          {BindRefToKeyInSAS X Y}
+          {Browse X}
+       end
     end
 
     proc {MainUtil S E}
@@ -49,7 +63,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
           [] nop then {Browse nopMatched#E} {Nop}
           [] var then {Browse var} {Var statement(st:S.2 env:E)}
           [] record then {Browse record}
-          [] bind then {Browse bind}
+          [] bind then {Browse bind} {Bind statement(st:S.2 env:E)}
           [] conditional then {Browse conditional}
           [] match then {Browse match}
           [] apply then {Browse apply}
@@ -65,7 +79,10 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
             [] statement(st:X env:E) then {Browse E} if X==nil then {Main} else {MainUtil X E} end
           end
       end
-   end
+    end
    
-   {Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(x) [nop]]]] env:nil)}
-   {Main}
+   %{Push SemanticStack statement(st:[[var ident(x) [var ident(y) [var ident(x) [nop]]]][var ident(x) [nop]]] env:nil)}
+    {Push SemanticStack statement(st:[var ident(x) [var ident(y) [bind ident(x) ident(y)]]] env:nil)}
+    {Main}
+    {Browse {Dictionary.items SAS}}
+    %{Browse {Dictionary.condGet 
