@@ -1,5 +1,6 @@
 \insert 'Unify.oz'
 \insert 'SingleAssignmentStore.oz'
+\insert 'Util.oz'
 
 declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStatement Statement Environment
     Statement = {NewCell nil}
@@ -26,7 +27,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     end
 
     %Returns the copy of the environment with variable N. It takes care of repitions and makes sure to replave them
-    % Don't directlt call this function. Use AdjEnv
+    % Don't directlt call this function for new identifiers
     fun {CopyEnv L N}
        %{Browse N#L}
        case L of
@@ -64,6 +65,42 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
        end
     end
 
+    % T is of the form statement(st:[ident(X) s1 s2] env:E)
+    proc {Conditonal T}
+      local S in
+        S = {RetrieveFromSAS {FindX T.env T.st.1}}
+        case S
+        of equivalence(X) then {Exception.'raise' variableUnbound(conditional)}
+        [] true then {Push SemanticStack statement(st:T.st.2.1 env:T.env)}
+        [] false then {Push SemanticStack statement(st:T.st.2.2.1 env:T.env)}
+        end 
+      end
+    end
+
+    fun {AddEnvPattern Xs P E}
+        case Xs
+        of nil then E
+        [] X|Xr then {AddEnvPattern Xr P {CopyEnv E [{GetIdentRecord P X.1} {FindX E X.2}]}}
+        end
+    end
+
+    proc {Match T}
+      local S P in
+        S = {RetrieveFromSAS {FindX T.env T.st.1}}
+        P = T.st.2.1
+        case S
+        of equivalence(X) then {Exception.'raise' variableUnbound(match)}
+        [] value (X) then
+          case X.2.1#P.2.1
+          of (literal(Y))#(literal(Z)) then 
+            if Y==Z andthen ({Len X.2.2}=={Len P.2.2} andthen {L1SubsetL2 P.2.2 X.2.2}) 
+              then {Push SemanticStack statement(st:T.st.2.2.1 env:{AddEnvPattern X.2.2 P.2.2 T.env})} 
+              else {Push SemanticStack statement(st:T.st.2.2.2.1 env:T.env)} 
+            end
+          end
+      end
+    end
+
     % S = Stack and E = Environment
     proc {MainUtil S E}
 	  case S.1 of
@@ -72,8 +109,8 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
           [] var then {Browse var} {Var statement(st:S.2 env:E)}
           [] record then {Browse record}
           [] bind then {Browse bind} {Bind statement(st:S.2 env:E)}
-          [] conditional then {Browse conditional}
-          [] match then {Browse match}
+          [] conditional then {Browse conditional} {Conditonal statement(st:S.2 env:E)}
+          [] match then {Browse match} {Match statement(st:S.2 env:E)}
           [] apply then {Browse apply}
           [] Y|Yr then {Push SemanticStack statement(st:S.2 env:E)} {Push SemanticStack statement(st:S.1 env:E)} {Main}
           end
