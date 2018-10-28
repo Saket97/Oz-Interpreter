@@ -36,7 +36,7 @@ fun {SubstituteIdentifiers Expression Environment}
      local Y in
         Y = {FindX Environment ident(X)}
         {Browse Y}
-        {Browse {Dictionary.keys SAS}}
+        {Browse {Dictionary.items SAS}}
         {Browse {RetrieveFromSAS Y}}
         {Browse 'After find'}
         {RetrieveFromSAS Y}
@@ -85,7 +85,9 @@ proc {UnifyInternal Expression1 Expression2 UnificationsDone}
       %% Expression1 is unbound. Don't think, just bind.
       case Expression2
       of equivalence(Y) then
-        {BindRefToKeyInSAS EqKey1 Y}
+        if (EqKey1\=Y) then 
+            {BindRefToKeyInSAS EqKey1 Y}
+        end
       else
         {BindValueToKeyInSAS EqKey1 Expression2}
       end
@@ -100,44 +102,50 @@ proc {UnifyInternal Expression1 Expression2 UnificationsDone}
       else
         {Raise incompatibleTypes(Expression1 Expression2)}
       end
-    [] record|Record1Label|Record1FeaturePairs then
+    [] record|Record1Label|Record1FeaturePairsTemp then
       %% Again, Expression2 is not an identifier. It has to be a literal
       %% or a record.
       case Expression2
-      of record|Record2Label|Record2FeaturePairs then
+      of record|Record2Label|Record2FeaturePairsTemp then
         %% The record labels have to be the same, and so do the feature
         %% pairs.
-        if Record1Label == Record2Label andthen {IsAritySame Record1FeaturePairs
-                                                 Record2FeaturePairs} then
+        if Record1Label == Record2Label andthen {IsAritySame Record1FeaturePairsTemp.1
+                                                 Record2FeaturePairsTemp.1} then
           %% Unify all the values within
-          {List.zip Record1FeaturePairs Record2FeaturePairs
-           fun {$ FeaturePair1 FeaturePair2}
-             %% In case we've added a few things to the SAS in between...
-             Val1 = FeaturePair1.2.1
-             Val2 = FeaturePair2.2.1
-             RealVal1 RealVal2
-           in
-             case Val1 of equivalence(X) then
-               RealVal1 = {RetrieveFromSAS X}
-             else
-               RealVal1 = Val1
-             end
+          local Record1FeaturePairs Record2FeaturePairs in
+                Record1FeaturePairs = Record1FeaturePairsTemp.1
+                Record2FeaturePairs = Record2FeaturePairsTemp.1
+              {List.zip Record1FeaturePairs Record2FeaturePairs
+               fun {$ FeaturePair1 FeaturePair2}
+                 %% In case we've added a few things to the SAS in between...
+                 Val1 = FeaturePair1.2.1
+                 Val2 = FeaturePair2.2.1
+                 RealVal1 RealVal2
+               in
+                 case Val1 of equivalence(X) then
+                   RealVal1 = {RetrieveFromSAS X}
+                 else
+                   RealVal1 = Val1
+                 end
 
-             case Val2 of equivalence(X) then
-               RealVal2 = {RetrieveFromSAS X}
-             else
-               RealVal2 = Val2
-             end
+                 case Val2 of equivalence(X) then
+                   RealVal2 = {RetrieveFromSAS X}
+                 else
+                   RealVal2 = Val2
+                 end
 
-             {UnifySubstituted RealVal1 RealVal2 UnificationsDoneNow}
-             unit
-           end _}
+                 {UnifySubstituted RealVal1 RealVal2 UnificationsDoneNow}
+                 unit
+               end _}
+            end
         else
           {Raise incompatibleTypes(Expression1 Expression2)}
         end
       else
         {Raise incompatibleTypes(Expression1 Expression2)}
       end
+    else
+        {Raise somewierderror(Expression1 Expression2)}
     end
   end
 end
