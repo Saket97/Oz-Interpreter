@@ -16,13 +16,17 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     proc {Nop}
        {Main}
     end
-
+    
+    %This function keeps track of the new variables introduced in SAS. It also ensures that everytime 
+    % a unique variable is introduced
     fun {GetNewVar}
        Counter:=@Counter+1
        {AddKeyToSAS @Counter}
        @Counter
     end
 
+    %Returns the copy of the environment with variable N. It takes care of repitions and makes sure to replave them
+    % Don't directlt call this function. Use AdjEnv
     fun {CopyEnv L N}
        %{Browse N#L}
        case L of
@@ -31,7 +35,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
        end
     end
 
-
+    % Performs the adj operation on environment. X is the new identifier of the form ident(Z)
     fun {AdjEnv L X}
        %{Browse x#L}
        case X of
@@ -39,6 +43,8 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
        end
     end
 
+    % Procedure to handle the var command.
+    % T = statement(st:[ident(newVariable) <Rest of the statement>] env:E)
     proc {Var T}
         %  {Browse T.st.1#T.st.2.1}
         case T.st of
@@ -47,6 +53,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
         end
     end
 
+    % Procedure to handle the bind command.
     proc {Bind T}
        local X Y in
           X = {FindX T.env T.st.1}
@@ -57,6 +64,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
        end
     end
 
+    % S = Stack and E = Environment
     proc {MainUtil S E}
 	  case S.1 of
           nil then {Main}
