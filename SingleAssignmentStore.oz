@@ -13,7 +13,7 @@ fun {RetrieveFromSAS X}
             of none then valueNotFound
             [] value(Z) then Z 
             [] equivalence(Z) then equivalence(Z)
-            [] reference(Z) then {RetrieveFromSAS V}
+            [] reference(Z) then {RetrieveFromSAS Z}
             end
         end
       end
@@ -33,7 +33,7 @@ proc {BindValueToKeyInSAS Key Val}
 end
 
 proc {BindRefToKeyInSAS Key RefKey}
-   {Browse 'Hello'}
+   %{Browse 'Hello'}
    local V in
       V = {Dictionary.condGet SAS Key none}
       case V

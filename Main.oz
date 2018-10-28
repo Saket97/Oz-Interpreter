@@ -1,5 +1,5 @@
 \insert 'Unify.oz'
-\insert 'SingleAssignmentStore.oz'
+%\insert 'SingleAssignmentStore.oz'
 
 declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStatement Statement Environment
     Statement = {NewCell nil}
@@ -51,9 +51,15 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
        local X Y in
           X = {FindX T.env T.st.1}
           Y = {FindX T.env T.st.2.1}
-          {Browse Y}
-          {BindRefToKeyInSAS X Y}
-          {Browse X}
+          {Browse T.env#X#Y}
+          %{Browse {Dictionary.keys SAS}}
+          %{Browse {Dictionary.items SAS}}
+          %{Browse {RetrieveFromSAS 1}}
+          {Browse 'In Bind, before unify'}
+          %{BindRefToKeyInSAS X Y}
+          {Unify T.st.1 T.st.2.1 T.env}
+          {Main}
+          %{Browse X}
        end
     end
 
@@ -82,7 +88,9 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     end
    
    %{Push SemanticStack statement(st:[[var ident(x) [var ident(y) [var ident(x) [nop]]]][var ident(x) [nop]]] env:nil)}
-    {Push SemanticStack statement(st:[var ident(x) [var ident(y) [bind ident(x) ident(y)]]] env:nil)}
+    {Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) ident(z)] [bind ident(z) ident(y)] [bind ident(x) ident(y)]]]]] env:nil)}
     {Main}
     {Browse {Dictionary.items SAS}}
+    {Browse 'Hello123'}
+    {Browse 'Hello123'}
     %{Browse {Dictionary.condGet 
