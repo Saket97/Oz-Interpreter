@@ -1,6 +1,10 @@
 declare SAS BindRefToKey RetrieveFromSAS BindValueToKey AddKeyToSAS
 {Dictionary.new SAS}
 
+% X = SAS variable. Retrieve it from the environment. If the variable is bound then it will return
+% the value like 10 or [record ...].
+% If it is unbound then it will return 
+% a record equivalence(<some SAS variable>)
 fun {RetrieveFromSAS X}
    local V in
       V = X
