@@ -9,7 +9,7 @@ declare Len ListExist L1SubsetL2 GetIdentRecord
     fun {ListExist L X}
       case L
       of nil then false
-      [] X1|Xr then if X1==X then true else {ListExist Xr X}
+      [] X1|Xr then if X1==X then true else {ListExist Xr X} end
       end
     end
 
@@ -26,3 +26,4 @@ declare Len ListExist L1SubsetL2 GetIdentRecord
       [] Y|Yr then if Y.1==X then Y.2 else {GetIdentRecord Yr X} end
       end 
     end
+    

@@ -2,7 +2,7 @@
 \insert 'SingleAssignmentStore.oz'
 \insert 'Util.oz'
 
-declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStatement Statement Environment
+declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStatement Statement Environment Match Conditional
     Statement = {NewCell nil}
     Environment = {NewCell nil}
     SemanticStack = {NewCell nil}
@@ -77,8 +77,8 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
         S = {RetrieveFromSAS {FindX T.env T.st.1}}
         case S
         of equivalence(X) then {Exception.'raise' variableUnbound(conditional)}
-        [] true then {Push SemanticStack statement(st:T.st.2.1 env:T.env)}
-        [] false then {Push SemanticStack statement(st:T.st.2.2.1 env:T.env)}
+        [] t then {Push SemanticStack statement(st:T.st.2.1 env:T.env)}
+        [] f then {Push SemanticStack statement(st:T.st.2.2.1 env:T.env)}
         end 
       end
     end
@@ -90,22 +90,23 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
         end
     end
 
-    proc {Match T}
-      local S P in
-        S = {RetrieveFromSAS {FindX T.env T.st.1}}
-        P = T.st.2.1
-        case S
-        of equivalence(X) then {Exception.'raise' variableUnbound(match)}
-        [] value (X) then
-          case X.2.1#P.2.1
-          of (literal(Y))#(literal(Z)) then 
-            if Y==Z andthen ({Len X.2.2}=={Len P.2.2} andthen {L1SubsetL2 P.2.2 X.2.2}) 
-              then {Push SemanticStack statement(st:T.st.2.2.1 env:{AddEnvPattern X.2.2 P.2.2 T.env})} 
-              else {Push SemanticStack statement(st:T.st.2.2.2.1 env:T.env)} 
-            end
-          end
-      end
-    end
+%    proc {Match T}
+%      local S P in
+%        S = {RetrieveFromSAS {FindX T.env T.st.1}}
+%        P = T.st.2.1
+%        case S
+%        of equivalence(X) then {Exception.'raise' variableUnbound(match)}
+%        [] value (X) then
+%          case X.2.1#P.2.1
+%          of (literal(Y))#(literal(Z)) then 
+%	     if (Y==Z andthen ({Len X.2.2}=={Len P.2.2}) andthen {L1SubsetL2 P.2.2 X.2.2}) 
+%              then {Push SemanticStack statement(st:T.st.2.2.1 env:{AddEnvPattern X.2.2 P.2.2 T.env})} 
+%              else {Push SemanticStack statement(st:T.st.2.2.2.1 env:T.env)} 
+%            end
+%	  end
+%	end
+%      end
+%    end
 
     % S = Stack and E = Environment
     proc {MainUtil S E}
@@ -133,8 +134,10 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     end
    
    %{Push SemanticStack statement(st:[[var ident(x) [var ident(y) [var ident(x) [nop]]]][var ident(x) [nop]]] env:nil)}
+    {Push SemanticStack statement(st:[var ident(x) [bind ident(x) literal(1)][conditional ident(x) [var
+											   idet(y) [nop]] [var ident(z) [nop]]]] env:nil)}
     %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) ident(z)] [bind ident(z) ident(y)] [bind ident(x) ident(y)]]]]] env:nil)}
-    {Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) [record literal(a) [[literal(1) ident(y)] [literal(2) literal(10)]]]] [bind ident(x) [record literal(a) [[literal(1) literal(69)] [literal(2) ident(z)]]]]]]]] env:nil)}
+    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) [record literal(a) [[literal(1) ident(y)] [literal(2) literal(10)]]]] [bind ident(x) [record literal(a) [[literal(1) literal(69)] [literal(2) ident(z)]]]]]]]] env:nil)}
     %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) [record literal(a) [[literal(1) literal(5)] [literal(2) ident(z)]]]] [bind ident(y) [record literal(a) [[literal(1) ident(z)] [literal(2) literal(10)]]]] [bind ident(x) ident(y)]]]]] env:nil)}
    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [[bind ident(x) [record literal(p) [[literal(n) ident(y)]]]] [bind ident(y) [record literal(p) [[literal(n) ident(x)]]]] [bind ident(x) ident(y)] ]]] env:nil)}
    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [[bind ident(x) [record literal(p) [[literal(n) ident(y)]]]] [bind ident(y) literal(69)]]]] env:nil)}
