@@ -1,4 +1,4 @@
-declare Len ListExist L1SubsetL2 GetIdentRecord
+declare Len ListExist L1SubsetL2 GetIdentRecord ListExistClosure Merge
     fun {Len L}
       case L
       of nil then 0
@@ -6,6 +6,8 @@ declare Len ListExist L1SubsetL2 GetIdentRecord
       end
     end
 
+    % Should be used by records only. L is a nested list and X is also a list. It matched the first element of X with the 
+    % first element of elements in L
     fun {ListExist L X}
       case L
       of nil then false
@@ -26,4 +28,18 @@ declare Len ListExist L1SubsetL2 GetIdentRecord
       [] Y|Yr then if Y.1==X then Y.2.1 else {GetIdentRecord Yr X} end
       end 
     end
+
+    % Check whether X exist in L
+    fun {ListExistClosure L X}
+      case L
+      of nil then false
+      [] X1|Xr then if X1==X then true else {ListExist Xr X} end
+      end
+    end
     
+    fun {Merge L1 L2}
+      case L1
+      of nil then L2
+      [] X|Xr then X|{Merge Xr L2}
+      end
+    end
