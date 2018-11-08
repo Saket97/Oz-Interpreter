@@ -59,7 +59,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
        local X Y in
           X = {FindX T.env T.st.1}
           Y = {FindX T.env T.st.2.1}
-          {Browse T.env#X#T.st.2.1}
+          %{Browse T.env#X#T.st.2.1}
           %{Browse {Dictionary.keys SAS}}
           %{Browse {Dictionary.items SAS}}
           %{Browse {RetrieveFromSAS 1}}
@@ -71,8 +71,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
                 Q=T.st.2.1
              end
           %{BindRefToKeyInSAS X Y}
-             {Browse T.st.1#Q#T.env#'Hi yes'}
-             %{Browse 'Fuck'}
+             %{Browse T.st.1#Q#T.env#'Hi yes'}
              {Unify T.st.1 Q T.env}
              {Main}
           end
@@ -115,6 +114,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
       local S P in
         S = {RetrieveFromSAS {FindX T.env T.st.1}}
 	 P = T.st.2.1
+     {Browse T.st.1}
 	 {Browse s#S#p#P}
 	 case S
 	 of equivalence(X) then {Exception.'raise' variableUnbound(match)}
@@ -168,10 +168,10 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
 
     % Note does not work for literals
     fun {GenEnv L1 L2 E}
-       {Browse 'Hi'}
+       %{Browse 'Hi'}
        {Browse L1#L2}
        case L1#L2
-       of nil#nil then {Browse 'Bye'} nil
+       of nil#nil then nil
        [] (X|Xr)#(Y|Yr) then {Browse Xr#Yr} [X {FindX E Y}]|{GenEnv Xr Yr E}
        end
     end
@@ -179,13 +179,15 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     proc {Apply T}
        local X E in
           X = {RetrieveFromSAS {FindX T.env T.st.1}}
-          {Browse 'In Proc'}
+          {Browse T}
           case X
-          of PVal#Closure then E={Merge {GenEnv PVal.2.1 T.st.2 T.env} Closure}
+          of (proc1|PVal)#Closure then E={Merge {Merge {GenEnv PVal.1 T.st.2 T.env} Closure} [T.st.1 X] }
           end
+          {Browse 'In Proc'}
           case X
           of V#C then {Push SemanticStack statement(st:V.2.2.1 env:E)}
           end
+          {Browse E}
           {Main}
        end
     end
@@ -194,7 +196,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     proc {MainUtil S E}
 	  case S.1 of
       nil then {Main}
-      [] nop then {Browse nopMatched#E} {Nop}
+      [] nop then {Nop}
       [] var then {Browse var} {Var statement(st:S.2 env:E)}
       [] record then {Browse record}
       [] bind then {Browse bind} {Bind statement(st:S.2 env:E)}
@@ -211,13 +213,17 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
           T = {Pop SemanticStack}
           case T of
             nil then skip
-            [] statement(st:X env:E) then {Browse env#E} if X==nil then {Main} else {MainUtil X E} end
+            [] statement(st:X env:E) then if X==nil then {Main} else {MainUtil X E} end
           end
       end
     end
 
     %{Push SemanticStack statement(st:[var ident(x) [proc1 [ident(y)] [[nop] ident(x) ident(y)]]] env:nil)}
-    {Push SemanticStack statement(st:[var ident(q) [ [bind ident(q) literal(10)] [var ident(x) [var ident(z) [bind ident(z) [proc1 [ident(y)] [bind ident(x) ident(y)]]] [apply ident(z) ident(q)]]]]] env:nil)}
+    %{Push SemanticStack statement(st:[var ident(q) [ [bind ident(q) literal(10)] [var ident(x) [var ident(z) [bind ident(z) [proc1 [ident(y)] [bind ident(x) ident(y)]]] [apply ident(z) ident(q)]]]]] env:nil)}
+    %{Push SemanticStack statement(st:[var ident(q) [ [bind ident(q) literal(10)] [var ident(x) [var ident(z) [bind ident(z) [proc1 [ident(y)] [bind ident(y) ident(q)]]] [apply ident(z) ident(x)]]]]] env:nil)}
+    %====================NOT Working
+    %{Push SemanticStack statement(st:[var ident(ay) [var ident(z) [var ident(q) [ [var ident(x) [[bind ident(x) [record literal(list) [[literal(1) ident(q)] [literal(2) [record literal(list) [[literal(1) ident(ay)] [literal(2) nil]]]]]]][[bind ident(z) [proc1 [ident(y)] [match ident(y) [record literal(list) [[literal(1) ident(f)] [literal(2) ident(r)]]] [[bind ident(f) literal(100)] [apply ident(z) ident(r)]] [nop]]]]] [apply ident(z) ident(x)]]]]]]] env:nil)}
+    %====================NOT Working
    %{Push SemanticStack statement(st:[[var ident(x) [var ident(y) [var ident(x) [nop]]]][var ident(x) [nop]]] env:nil)}
    % {Push SemanticStack statement(st:[var ident(x) [bind ident(x) t][conditional ident(x) [var ident(y) [nop]] [var ident(z) [nop]]]] env:nil)}
     %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) ident(z)] [bind ident(z) ident(y)] [bind ident(x) ident(y)]]]]] env:nil)}
