@@ -153,7 +153,32 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
 	  {Browse value([S CloEnv])}
        end
     end
-    
+
+    % X,Y,Z are of the form ident(x) and E is the environment
+    proc {Add X Y Z E}
+       local T1 T2 in
+	  T1 = {RetrieveFromSAS {FindX E X}}
+	  T2 = {RetrieveFromSAS {FindX E Y}}
+       case T1#T2
+       of (literal(N1))#(literal(N2)) then {Push SemanticStack statement(st:[bind Z literal(N1+N2)] env: E)} {Main}
+       else
+	  {Exception.'raise' variableUnbound(add)}
+       end
+       end
+    end
+
+    proc {Product X Y Z E}
+       local T1 T2 in
+	  T1 = {RetrieveFromSAS {FindX E X}}
+	  T2 = {RetrieveFromSAS {FindX E Y}}
+       case T1#T2
+       of (literal(N1))#(literal(N2)) then {Push SemanticStack statement(st:[bind Z literal(N1*N2)] env: E)} {Main}
+       else
+	  {Exception.'raise' variableUnbound(add)}
+       end
+       end
+    end
+
     % S = Stack and E = Environment
     proc {MainUtil S E}
 	  case S.1 of
@@ -166,6 +191,8 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
           [] match then {Browse match} {Match statement(st:S.2 env:E)}
 	  [] apply then {Browse apply}
 	  [] proc1 then {Browse proc1} {Proc S E}% {Proc statement(st:S.2 env:E)}
+	  [] add then {Browse add} {Add S.2.1 S.2.2.1 S.2.2.2.1 E}
+	  [] mul then {Browse product} {Product S.2.1 S.2.2.1 S.2.2.2.1 E}
           [] Y|Yr then {Push SemanticStack statement(st:S.2 env:E)} {Push SemanticStack statement(st:S.1 env:E)} {Main}
           end
     end
@@ -186,12 +213,14 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) ident(z)] [bind ident(z) ident(y)] [bind ident(x) ident(y)]]]]] env:nil)}
     %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) [record literal(a) [[literal(1) ident(y)] [literal(2) literal(10)]]]] [bind ident(x) [record literal(a) [[literal(1) literal(69)] [literal(2) ident(z)]]]]]]]] env:nil)}
     
-    {Push SemanticStack statement(st:[var ident(z) [var ident(x) [bind ident(x) [record literal(a) [[literal(f1) ident(z)][literal(f2) literal(2)]]]] [match ident(x) [record literal(a)[[literal(f1) ident(y)][literal(f2) ident(z)]]] [var ident(b) [nop]] [var ident(c) [nop]]]][bind ident(z) literal(10)]] env:nil)}
+   % {Push SemanticStack statement(st:[var ident(z) [var ident(x) [bind ident(x) [record literal(a) [[literal(f1) ident(z)][literal(f2) literal(2)]]]] [match ident(x) [record literal(a)[[literal(f1) ident(y)][literal(f2) ident(z)]]] [var ident(b) [nop]] [var ident(c) [nop]]]][bind ident(z) literal(10)]] env:nil)}
 %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) [record literal(a) [[literal(1) literal(5)] [literal(2) ident(z)]]]] [bind ident(y) [record literal(a) [[literal(1) ident(z)] [literal(2) literal(10)]]]] [bind ident(x) ident(y)]]]]] env:nil)}
    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [[bind ident(x) [record literal(p) [[literal(n) ident(y)]]]] [bind ident(y) [record literal(p) [[literal(n) ident(x)]]]] [bind ident(x) ident(y)] ]]] env:nil)}
    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [[bind ident(x) [record literal(p) [[literal(n) ident(y)]]]] [bind ident(y) literal(69)]]]] env:nil)}
+    {Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) literal(5)] [bind ident(y) literal(2)][mul ident(x) ident(y) ident(z)]]]]] env:nil)}
     {Main}
     {Browse {Dictionary.items SAS}}
     {Browse 'Hello123'}
     {Browse 'Hello123'}
     %{Browse {Dictionary.condGet 
+    %{Push SemanticStack statement(st:[var ident(sum) [var ident(product) [bind ident(sum) [proc1 [ident(x) ident(y) ident(z)] [add ident(x) ident(y) ident(z)]]] [bind ident(product) [proc1 [ident(x) ident(y) ident(z)] [mul ident(x) ident(y) ident(z)]]]]] env:nil)}
