@@ -1,4 +1,4 @@
-declare Len ListExist L1SubsetL2 GetIdentRecord ListExistClosure Merge
+declare Len ListExist L1SubsetL2 GetIdentRecord ListExistClosure Merge GenEnv
     fun {Len L}
       case L
       of nil then 0
@@ -43,3 +43,4 @@ declare Len ListExist L1SubsetL2 GetIdentRecord ListExistClosure Merge
       [] X|Xr then X|{Merge Xr L2}
       end
     end
+

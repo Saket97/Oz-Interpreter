@@ -17,6 +17,7 @@
 declare
 
 fun {FindX Environment X}
+   %{Browse X#'In Find'}
    case Environment
    of nil then notFound
    [] H|T then if H.1==X then H.2.1 else {FindX T X} end
@@ -35,10 +36,10 @@ fun {SubstituteIdentifiers Expression Environment}
   [] ident(X) then
      local Y in
         Y = {FindX Environment ident(X)}
-        {Browse Y}
-        {Browse {Dictionary.items SAS}}
-        {Browse {RetrieveFromSAS Y}}
-        {Browse 'After find'}
+        %{Browse Environment#ident(X)}
+        %{Browse {Dictionary.items SAS}}
+        %{Browse {RetrieveFromSAS Y}}
+        %{Browse 'After find'}
         {RetrieveFromSAS Y}
      end
   else
