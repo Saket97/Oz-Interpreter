@@ -263,7 +263,8 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
 %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) [record literal(a) [[literal(1) literal(5)] [literal(2) ident(z)]]]] [bind ident(y) [record literal(a) [[literal(1) ident(z)] [literal(2) literal(10)]]]] [bind ident(x) ident(y)]]]]] env:nil)}
    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [[bind ident(x) [record literal(p) [[literal(n) ident(y)]]]] [bind ident(y) [record literal(p) [[literal(n) ident(x)]]]] [bind ident(x) ident(y)] ]]] env:nil)}
    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [[bind ident(x) [record literal(p) [[literal(n) ident(y)]]]] [bind ident(y) literal(69)]]]] env:nil)}
-    {Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) literal(5)] [bind ident(y) literal(2)][mul ident(x) ident(y) ident(z)]]]]] env:nil)}
+    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) literal(5)] [bind ident(y) literal(2)][mul ident(x) ident(y) ident(z)]]]]] env:nil)}
+    {Push SemanticStack statement(st:[var ident(x) [bind ident(x) [record literal(test) [[literal(1) literal(1)] [literal(2) ident(x)]]] ]] env:nil)}
     {Main}
     {Browse {Dictionary.keys SAS}}
     {Browse {Dictionary.items SAS}}
