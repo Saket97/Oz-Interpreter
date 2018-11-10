@@ -293,19 +293,47 @@ SemanticStatement = statement(st:Statement env:Environment)
    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [[bind ident(x) [record literal(p) [[literal(n) ident(y)]]]] [bind ident(y) [record literal(p) [[literal(n) ident(x)]]]] [bind ident(x) ident(y)] ]]] env:nil)}
    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [[bind ident(x) [record literal(p) [[literal(n) ident(y)]]]] [bind ident(y) literal(69)]]]] env:nil)}
     %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) literal(5)] [bind ident(y) literal(2)][mul ident(x) ident(y) ident(z)]]]]] env:nil)}
-    {Push SemanticStack statement(st:[var ident(x) [bind ident(x) [record literal(test) [[literal(1) literal(1)] [literal(2) ident(x)]]] ]] env:nil)}
+    %{Push SemanticStack statement(st:[var ident(x) [bind ident(x) [record literal(test) [[literal(1) literal(1)] [literal(2) ident(x)]]] ]] env:nil)}
     %{Showr createWindow}
     %{Showr option(buffer size:50)}
-
+    %{Push SemanticStack statement(st:[[var ident(y) [var ident(z) [bind ident(z) ident(y)]]] [var ident(y) [var ident(z) [bind ident(z) ident(y)]]]] env:nil)}
+    %{Push SemanticStack statement(st:[var ident(x) [
+    %                                                [var ident(y) [
+    %                                                               [bind ident(y) literal(10)]
+    %                                                               [bind ident(x) [proc1 [ident(x1)] [
+    %                                                                                                  [var ident(y) [bind ident(x1) ident(y)]]
+    %                                                                                                  [bind ident(x1) ident(y)]
+    %                                                                                                 ]
+    %                                                                              ]]
+    %                                                              ]]
+    %                                                [var ident(z) [apply ident(x) ident(z)]]
+    %                                               ]] env:nil)}
+    %{Push SemanticStack statement(st:[[var ident(x) [[
+    %                                                  [bind ident(x) [proc1 [ident(x1) ident(x2) ident(x3)] [
+    %                                                                                                         [add ident(x1) ident(x2) ident(x3)]
+    %                                                                                                        ]]]
+    %                                                  [var ident(y) [
+    %                                                                  [var ident(z) [
+    %                                                                                 [var ident(a) [
+    %                                                                                                [bind ident(a) literal(69)]
+    %                                                                                                [bind ident(z) literal(31)]
+    %                                                                                               [apply ident(x) ident(a) ident(z) ident(y)]
+    %                                                                                              ]] 
+    %                                                                               ]]
+    %                                                                ]]
+    %                                                 ]]]] env:nil)}
+    %{Push SemanticStack statement(st:[var ident(x) [[var ident(y) [[var ident(z) [var ident(q) [[bind ident(z) literal(69)] [bind ident(q) literal(10)] [bind ident(x) [proc1 [ident(x) ident(y) ident(z)] [add ident(x) ident(y) ident(z)]]]]]]]]]] env:nil)}
+    %{Push SemanticStack statement(st:[var ident(x) [[var ident(y) [[var ident(z) [var ident(q) [[bind ident(z) literal(69)] [bind ident(q) literal(10)] [bind ident(x) [proc1 [ident(x) ident(y) ident(z)] [add ident(x) ident(y) ident(z)]]]]]]]]]] env:nil)}
     % Tests
-    %1){Push SemanticStack statement(st:[[nop] [nop]] env:nil)}
+    %{Push SemanticStack statement(st:[[nop] [nop]] env:nil)}
     %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [bind ident(x) ident(y)] [bind ident(y) ident(z)] [bind ident(z) ident(x)][bind ident(x) [record literal(a) [[literal(1) ident(x)][literal(2) ident(y)]]]][bind ident(z) [record literal(a)[[literal(1) ident(y)][literal(2) ident(x)]]]][nop]]]]  env:nil)}
     %{Push SemanticStack statement(st:[var ident(w) [var ident(x) [var ident(y) [[bind ident(w) literal(10)][bind ident(x) [record literal(a)[[literal(1) ident(y)][literal(2) ident(w)]]]] [bind ident(y) literal(5)]   [match ident(x) [record literal(a)[[literal(1) ident(z)][literal(2) ident(p)]]] [var ident(t) [nop]] [var ident(f) [nop]]]   ]]]] env:nil)}
     {Main}
-   
+    {Browse {Dictionary.keys SAS}}
+    {Browse {Dictionary.items SAS}}
     {Show 'Hello123'}
     {Show ''}
-    %{File close}
+    %{F(ile close}
     %{Show 'Hello123'}
     %{Show {Dictionary.condGet 
     %{Push SemanticStack statement(st:[var ident(sum) [var ident(product) [bind ident(sum) [proc1 [ident(x) ident(y) ident(z)] [add ident(x) ident(y) ident(z)]]] [bind ident(product) [proc1 [ident(x) ident(y) idient(z)] [mul ident(x) ident(y) ident(z)]]]]] env:nil)}
