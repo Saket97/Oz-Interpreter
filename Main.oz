@@ -2,17 +2,19 @@
 %\insert 'SingleAssignmentStore.oz'
 \insert 'Util.oz'
 
-declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStatement Statement Environment Match Conditional GetEnv
+declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStatement Statement Environment Match Conditional GetEnv File
     Statement = {NewCell nil}
     Environment = {NewCell nil}
     SemanticStack = {NewCell nil}
     Counter = {NewCell 0}
-    SemanticStatement = statement(st:Statement env:Environment)
+SemanticStatement = statement(st:Statement env:Environment)
+    %File = {New Open.file init(name: 'test.txt' flags:[write create] mode:mode(owner:[read write] group:[read write]))}
 
     %Stack Functions
     fun {Pop S} case @S of nil then nil [] X|X1 then S:=X1 X end end
     proc {Push S E} S:=E|@S end
     fun {IsEmpty S} @S==nil end
+
     %Nop
     proc {Nop}
        {Main}
@@ -26,10 +28,11 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
        @Counter
     end
 
+   
     %Returns the copy of the environment with variable N. It takes care of repitions and makes sure to replave them
     % Don't directly call this function for new identifiers
     fun {CopyEnv L N}
-       %{Browse N#L}
+       %{Show N#L}
        case L of
           nil then N|nil
        [] X|Xr then if X.1==N.1 then {CopyEnv Xr N} else X|{CopyEnv Xr N} end
@@ -38,7 +41,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
 
     % Performs the adj operation on environment. X is the new identifier of the form ident(Z)
     fun {AdjEnv L X}
-       %{Browse x#L}
+       %{Show x#L}
        case X of
           ident(Y) then {CopyEnv L [ident(Y) {GetNewVar}]}
        end
@@ -47,7 +50,7 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     % Procedure to handle the var command.
     % T = statement(st:[ident(newVariable) <Rest of the statement>] env:E)
     proc {Var T}
-        %  {Browse T.st.1#T.st.2.1}
+        %  {Show T.st.1#T.st.2.1}
         case T.st of
           nil then {Main}
           [] X|Xr then {Push SemanticStack statement(st:Xr env:{AdjEnv T.env X})} {Main}
@@ -59,11 +62,11 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
        local X Y in
           X = {FindX T.env T.st.1}
           Y = {FindX T.env T.st.2.1}
-          %{Browse T.env#X#T.st.2.1}
-          %{Browse {Dictionary.keys SAS}}
-          %{Browse {Dictionary.items SAS}}
-          %{Browse {RetrieveFromSAS 1}}
-          {Browse 'In Bind, before unify'}
+          %{Show T.env#X#T.st.2.1}
+          %{Show {Dictionary.keys SAS}}
+          %{Show {Dictionary.items SAS}}
+          %{Show {RetrieveFromSAS 1}}
+          %{Show 'In Bind, before unify'}
           local Q in
              case T.st.2.1
              of Z|Zr then if Z==proc1 then Q=T.st.2.1#{ProcRet T.st.2.1 T.env} else Q=T.st.2.1 end
@@ -71,11 +74,11 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
                 Q=T.st.2.1
              end
           %{BindRefToKeyInSAS X Y}
-             %{Browse T.st.1#Q#T.env#'Hi yes'}
+             %{Show T.st.1#Q#T.env#'Hi yes'}
              {Unify T.st.1 Q T.env}
              {Main}
           end
-          %{Browse X}
+          %{Show X}
        end
     end
 
@@ -85,12 +88,27 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
         S = {RetrieveFromSAS {FindX T.env T.st.1}}
         case S
         of equivalence(X) then {Exception.'raise' variableUnbound(conditional)}
-        [] t then {Browse conditionalTrue} {Browse T.st.2.1} {Push SemanticStack statement(st:T.st.2.1 env:T.env)} {Main}
-        [] f then {Browse conditionalFalse} {Push SemanticStack statement(st:T.st.2.2.1 env:T.env)} {Main}
+        [] t then {Push SemanticStack statement(st:T.st.2.1 env:T.env)} {Main}
+        [] f then {Push SemanticStack statement(st:T.st.2.2.1 env:T.env)} {Main}
         end 
       end
     end
 
+    fun {Find V T1 T2}
+       case T1#T2
+       of nil#nil then notFound
+       [](X|Xr)#(Y|Yr) then if Y==value(V) then X else {Find V Xr Yr} end
+       end
+    end
+
+    fun {GetSASVarFromVal V}
+       local T1 T2 in
+	  T1 = {Dictionary.keys SAS}
+	  T2 = {Dictionary.items SAS}
+	  {Find V T1 T2}
+       end
+    end
+ 
     fun {AddEnvPattern Xs P E}
         case Xs
         of nil then E
@@ -99,12 +117,12 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
 	   of ident(Z) then {AddEnvPattern Xr P {CopyEnv E [{GetIdentRecord P X.1} {FindX E X.2.1}]}}
 	   [] equivalence(Z) then {AddEnvPattern Xr P {CopyEnv E [{GetIdentRecord P X.1} Z]}}
 	   else
-	      local T in
-		 {Browse x#X}
-		 T = {AdjEnv E {GetIdentRecord P X.1}}
-		 {Browse T#T}
-		 {Unify {GetIdentRecord P X.1} X.2.1 T}
-		 {AddEnvPattern Xr P T}
+	      local T T2 in
+		 T2 = {GetSASVarFromVal X.2.1}
+		 if T2 == notFound
+		 then T = {AdjEnv E {GetIdentRecord P X.1}} {Unify {GetIdentRecord P X.1} X.2.1 T}  {AddEnvPattern Xr P T}
+		 else T = {CopyEnv E [{GetIdentRecord P X.1} T2]}  {AddEnvPattern Xr P T}
+		 end
 	      end
 	   end
         end
@@ -113,16 +131,16 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     % T is of the form statement(st:[ident(X) s1 s2] env:E)
     proc {Match T}
       local S P in
-        S = {RetrieveFromSAS {FindX T.env T.st.1}}
+         S = {RetrieveFromSAS {FindX T.env T.st.1}}
 	 P = T.st.2.1
-     {Browse T.st.1}
-	 {Browse s#S#p#P}
+	 {Show T.st.1}
+	 {Show s#S#p#P}
 	 case S
 	 of equivalence(X) then {Exception.'raise' variableUnbound(match)}
 	 [] X then case X.2.1#P.2.1
-			  of (literal(Y))#(literal(Z)) then {Browse yipee1} {Browse y#Y#z#Z} {Browse X.2.2.1#P.2.2.1}{Browse {L1SubsetL2 P.2.2.1 X.2.2.1}}
+			  of (literal(Y))#(literal(Z)) then {Show yipee1} {Show y#Y#z#Z} {Show X.2.2.1#P.2.2.1}{Show {L1SubsetL2 P.2.2.1 X.2.2.1}}
 			     if (Y==Z andthen {Len X.2.2.1} == {Len P.2.2.1}) andthen {L1SubsetL2 P.2.2.1 X.2.2.1}
-			     then {Browse yipee} {Push SemanticStack statement(st:T.st.2.2.1 env:{AddEnvPattern X.2.2.1 P.2.2.1 T.env})}{Main}
+			     then {Push SemanticStack statement(st:T.st.2.2.1 env:{AddEnvPattern X.2.2.1 P.2.2.1 T.env})}{Main}
 			     else {Push SemanticStack statement(st:T.st.2.2.2.1 env:T.env)} {Main}
 			     end
 			  end
@@ -162,33 +180,33 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     proc {Proc S E}
        local CloEnv in
           CloEnv = {GetClosure S.2.2.1 E S.2.1}
-          {Browse cloEnv#CloEnv}
-          {Browse value([S CloEnv])}
+          %{Show cloEnv#CloEnv}
+          %{Show value([S CloEnv])}
        end
     end
 
-    % Note does not work for literals
+    % Note does not work for literals i.e. the arguments of the procedure has to be an identifier.It can't be a value
     fun {GenEnv L1 L2 E}
-       %{Browse 'Hi'}
-       {Browse L1#L2}
+       %{Show 'Hi'}
+       %{Show L1#L2}
        case L1#L2
        of nil#nil then nil
-       [] (X|Xr)#(Y|Yr) then {Browse Xr#Yr} [X {FindX E Y}]|{GenEnv Xr Yr E}
+       [] (X|Xr)#(Y|Yr) then [X {FindX E Y}]|{GenEnv Xr Yr E}
        end
     end
 
     proc {Apply T}
        local X E in
           X = {RetrieveFromSAS {FindX T.env T.st.1}}
-          {Browse T}
+          {Show T}
           case X
           of (proc1|PVal)#Closure then E={Merge {Merge {GenEnv PVal.1 T.st.2 T.env} Closure} [T.st.1 X] }
           end
-          {Browse 'In Proc'}
+          {Show 'In Proc'}
           case X
           of V#C then {Push SemanticStack statement(st:V.2.2.1 env:E)}
           end
-          {Browse E}
+          %{Show E}
           {Main}
        end
     end
@@ -221,24 +239,35 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
     % S = Stack and E = Environment
     proc {MainUtil S E}
 	  case S.1 of
-      nil then {Main}
-      [] nop then {Nop}
-      [] var then {Browse var} {Var statement(st:S.2 env:E)}
-      [] record then {Browse record}
-      [] bind then {Browse bind} {Bind statement(st:S.2 env:E)}
-      [] conditional then {Browse conditional} {Conditonal statement(st:S.2 env:E)}
-      [] match then {Browse match} {Match statement(st:S.2 env:E)}
-      [] apply then {Browse apply} {Apply statement(st:S.2 env:E)}
-      [] proc1 then {Browse proc1} {Proc S E}% {Proc statement(st:S.2 env:E)}
-	  [] add then {Browse add} {Add S.2.1 S.2.2.1 S.2.2.2.1 E}
-	  [] mul then {Browse product} {Product S.2.1 S.2.2.1 S.2.2.2.1 E}
-      [] Y|Yr then {Push SemanticStack statement(st:S.2 env:E)} {Push SemanticStack statement(st:S.1 env:E)} {Main}
-      end
+	     nil then {Main}
+	  [] nop then {Nop}
+	  [] var then  {Var statement(st:S.2 env:E)}
+	  [] record then skip
+	  [] bind then  {Bind statement(st:S.2 env:E)}
+	  [] conditional then {Show conditional} {Conditonal statement(st:S.2 env:E)}
+	  [] match then {Show match} {Match statement(st:S.2 env:E)}
+	  [] apply then {Show apply} {Apply statement(st:S.2 env:E)}
+	  [] proc1 then {Show proc1} {Proc S E}% {Proc statement(st:S.2 env:E)}
+	  [] add then {Show add} {Add S.2.1 S.2.2.1 S.2.2.2.1 E} 
+	  [] mul then {Show product} {Product S.2.1 S.2.2.1 S.2.2.2.1 E}
+	  [] Y|Yr then {Push SemanticStack statement(st:S.2 env:E)} {Push SemanticStack statement(st:S.1 env:E)} {Main}
+	  end
     end
  
     proc {Main}
       local T in
-          T = {Pop SemanticStack}
+	 T = {Pop SemanticStack}
+	 if T \= nil andthen T.st \= nil then
+	    {Show 'statement:'}
+	    {Show T.st}
+	    {Show 'Environment for this statement i.e. before execution of this statement:'}
+	    {Show T.env}
+	    {Show 'SAS before executing this statement:'}
+	    {Show {Zip {Dictionary.keys SAS} {Dictionary.items SAS}}}
+	    %{File write(vs:[1 2 3 4 5]#{Dictionary.keys SAS}#{Dictionary.items SAS}#'\n')}
+	 end
+	 
+	 
           case T of
             nil then skip
             [] statement(st:X env:E) then if X==nil then {Main} else {MainUtil X E} end
@@ -265,10 +294,18 @@ declare Counter MainUtil Main Nop SemanticStack Push Pop IsEmpty SemanticStateme
    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [[bind ident(x) [record literal(p) [[literal(n) ident(y)]]]] [bind ident(y) literal(69)]]]] env:nil)}
     %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [[bind ident(x) literal(5)] [bind ident(y) literal(2)][mul ident(x) ident(y) ident(z)]]]]] env:nil)}
     {Push SemanticStack statement(st:[var ident(x) [bind ident(x) [record literal(test) [[literal(1) literal(1)] [literal(2) ident(x)]]] ]] env:nil)}
+    %{Showr createWindow}
+    %{Showr option(buffer size:50)}
+
+    % Tests
+    %1){Push SemanticStack statement(st:[[nop] [nop]] env:nil)}
+    %{Push SemanticStack statement(st:[var ident(x) [var ident(y) [var ident(z) [bind ident(x) ident(y)] [bind ident(y) ident(z)] [bind ident(z) ident(x)][bind ident(x) [record literal(a) [[literal(1) ident(x)][literal(2) ident(y)]]]][bind ident(z) [record literal(a)[[literal(1) ident(y)][literal(2) ident(x)]]]][nop]]]]  env:nil)}
+    %{Push SemanticStack statement(st:[var ident(w) [var ident(x) [var ident(y) [[bind ident(w) literal(10)][bind ident(x) [record literal(a)[[literal(1) ident(y)][literal(2) ident(w)]]]] [bind ident(y) literal(5)]   [match ident(x) [record literal(a)[[literal(1) ident(z)][literal(2) ident(p)]]] [var ident(t) [nop]] [var ident(f) [nop]]]   ]]]] env:nil)}
     {Main}
-    {Browse {Dictionary.keys SAS}}
-    {Browse {Dictionary.items SAS}}
-    {Browse 'Hello123'}
-    {Browse 'Hello123'}
-    %{Browse {Dictionary.condGet 
-    %{Push SemanticStack statement(st:[var ident(sum) [var ident(product) [bind ident(sum) [proc1 [ident(x) ident(y) ident(z)] [add ident(x) ident(y) ident(z)]]] [bind ident(product) [proc1 [ident(x) ident(y) ident(z)] [mul ident(x) ident(y) ident(z)]]]]] env:nil)}
+   
+    {Show 'Hello123'}
+    {Show ''}
+    %{File close}
+    %{Show 'Hello123'}
+    %{Show {Dictionary.condGet 
+    %{Push SemanticStack statement(st:[var ident(sum) [var ident(product) [bind ident(sum) [proc1 [ident(x) ident(y) ident(z)] [add ident(x) ident(y) ident(z)]]] [bind ident(product) [proc1 [ident(x) ident(y) idient(z)] [mul ident(x) ident(y) ident(z)]]]]] env:nil)}

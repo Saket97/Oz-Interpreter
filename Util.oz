@@ -44,3 +44,10 @@ declare Len ListExist L1SubsetL2 GetIdentRecord ListExistClosure Merge GenEnv
       end
     end
 
+    fun {Zip L1 L2}
+      case L1#L2
+      of nil#nil then nil
+      [] (X|Xr)#(Y|Yr) then [X Y]|{Zip Xr Yr}
+      end
+    end
+

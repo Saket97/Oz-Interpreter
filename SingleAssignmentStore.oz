@@ -37,7 +37,7 @@ proc {BindValueToKeyInSAS Key Val}
 end
 
 proc {BindRefToKeyInSAS Key RefKey}
-   %{Browse 'Hello'}
+   %{Show 'Hello'}
    local V in
       V = {Dictionary.condGet SAS Key none}
       case V
@@ -57,4 +57,4 @@ end
 %{AddKeyToSAS 1}
 %{AddKeyToSAS 2}
 %{BindRefToKeyInSAS 2 1}
-%{Browse {Dictionary.items SAS}}
+%{Show {Dictionary.items SAS}}

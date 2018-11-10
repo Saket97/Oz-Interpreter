@@ -17,7 +17,7 @@
 declare
 
 fun {FindX Environment X}
-   %{Browse X#'In Find'}
+   %{Show X#'In Find'}
    case Environment
    of nil then notFound
    [] H|T then if H.1==X then H.2.1 else {FindX T X} end
@@ -36,10 +36,10 @@ fun {SubstituteIdentifiers Expression Environment}
   [] ident(X) then
      local Y in
         Y = {FindX Environment ident(X)}
-        %{Browse Environment#ident(X)}
-        %{Browse {Dictionary.items SAS}}
-        %{Browse {RetrieveFromSAS Y}}
-        %{Browse 'After find'}
+        %{Show Environment#ident(X)}
+        %{Show {Dictionary.items SAS}}
+        %{Show {RetrieveFromSAS Y}}
+        %{Show 'After find'}
         {RetrieveFromSAS Y}
      end
   else
@@ -78,9 +78,9 @@ proc {UnifyInternal Expression1 Expression2 UnificationsDone}
     UnificationsDoneNow = {List.append UnificationsDone [[Expression1 Expression2]]}
   in
     %% First check if Expression1 is an identifier
-    %{Browse Expression1}
-    %{Browse Expression2}
-    %{Browse 'In unify'}
+    %{Show Expression1}
+    %{Show Expression2}
+    %{Show 'In unify'}
     case Expression1
     of equivalence(EqKey1) then
       %% Expression1 is unbound. Don't think, just bind.
